@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>데이터 그래프</title>
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 700px; /* 컨테이너 너비 조정 */
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .input-row input {
+            flex: 1;
+            margin: 0 5px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            transition: border-color 0.3s;
+            box-sizing: border-box; /* 박스 사이징 추가 */
+        }
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        canvas {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>월별 데이터 그래프</h1>
+        
+        <div class="input-row">
+            <input type="text" placeholder="" maxlength="3">
+            <input type="text" placeholder="" maxlength="3">
+            <input type="text" placeholder="" maxlength="3">
+            <input type="text" placeholder="" maxlength="3">
+            <input type="text" placeholder="" maxlength="3">
+        </div>
+        
+        <div class="input-row">
+            <input type="number" placeholder="값 1">
+            <input type="number" placeholder="값 2">
+            <input type="number" placeholder="값 3">
+            <input type="number" placeholder="값 4">
+            <input type="number" placeholder="값 5">
+        </div>
+        
+        <button onclick="createLineGraph()">그래프 그리기</button>
+        
+        <canvas id="dataGraph" width="700" height="400"></canvas>
+    </div>
+
+    <script>
+        function createLineGraph() {
+            const monthInputs = document.querySelectorAll('.input-row input[type="text"]');
+            const dataInputs = document.querySelectorAll('.input-row input[type="number"]');
+            
+            const months = Array.from(monthInputs).map(input => input.value);
+            const values = Array.from(dataInputs).map(input => parseFloat(input.value));
+            
+            // 유효성 검사
+            if (months.some(month => month.trim() === '') || values.some(isNaN)) {
+                alert('모든 월과 값 필드를 채워주세요.');
+                return;
+            }
+
+            const canvas = document.getElementById('dataGraph');
+            const ctx = canvas.getContext('2d');
+            
+            // 캔버스 초기화
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 그래프 설정
+            const padding = 60;
+            const graphWidth = canvas.width - 2 * padding;
+            const graphHeight = canvas.height - 2 * padding;
+            
+            // 값 범위 계산
+            const maxValue = Math.max(...values);
+            const minValue = Math.min(...values);
+            
+            // 격자 그리기
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + i * (graphHeight / 5);
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+            }
+            ctx.stroke();
+            
+            // y축 값 레이블
+            ctx.fillStyle = '#2c3e50';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i <= 5; i++) {
+                const yValue = minValue + (maxValue - minValue) * (1 - i / 5);
+                const y = padding + i * (graphHeight / 5);
+                ctx.fillText(yValue.toFixed(1), padding - 10, y);
+            }
+            
+            // x축 월 레이블
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            months.forEach((month, index) => {
+                const x = padding + index * (graphWidth / (months.length - 1));
+                ctx.fillText(month, x, canvas.height - padding + 10);
+            });
+            
+            // 꺾은선 그래프 그리기
+            ctx.beginPath();
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            
+            const points = [];
+            
+            values.forEach((value, index) => {
+                const x = padding + index * (graphWidth / (values.length - 1));
+                const y = canvas.height - padding - ((value - minValue) / (maxValue - minValue)) * graphHeight;
+                points.push({x, y});
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // 점 그리기
+            points.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = '#3498db';
+                ctx.fill();
+            });
+        }
+    </script>
+</body>
+</html>
